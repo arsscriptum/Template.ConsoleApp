@@ -24,7 +24,7 @@ Foreach ($FilePath in $Script:PrivateScripts) {
     Try {
         $Script:CurrentIndex++
         . "$FilePath"
-        Write-Host "✅ $FilePath [$Script:CurrentIndex/$Script:PrivatesCount]"
+        Write-Verbose "✅ $FilePath [$Script:CurrentIndex/$Script:PrivatesCount]"
     }  
     Catch {
         $Script:ImportErrors++

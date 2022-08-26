@@ -8,9 +8,9 @@
      <TempRoot>$(ProjectDir)</TempRoot>
      <UsingQt5>0</UsingQt5>
      <UsingWinsock>0</UsingWinsock>
-     <UsingOpenSSL>0</UsingOpenSSL>
-     <UsingJSMNLib>0</UsingJSMNLib>
-     <UsingHTTPLib>0</UsingHTTPLib>
+     <UsingOpenSSL>__USE_HTTPLIB__</UsingOpenSSL>
+     <UsingJSMNLib>__USE_JSONLIB__</UsingJSMNLib>
+     <UsingHTTPLib>__USE_HTTPLIB__</UsingHTTPLib>
      <SolutionRootDirectory>$(ProjectDir)..\</SolutionRootDirectory>
      <ExternalDirectory>$(SolutionRootDirectory)\external</ExternalDirectory>
   </PropertyGroup> 
@@ -45,11 +45,7 @@
     <OpenSSL_Include_Directory>$(OpenSSL_RootDirectory)\include</OpenSSL_Include_Directory>
     <OpenSSL_Library_Directory>$(OpenSSL_RootDirectory)\lib</OpenSSL_Library_Directory>
     <OpenSSL_Binary_Directory>$(OpenSSL_RootDirectory)\bin</OpenSSL_Binary_Directory>
-    <OpenSSL_Defines>CPPHTTPLIB_OPENSSL_SUPPORT</OpenSSL_Defines>
-
-
-
-
+    <OpenSSL_Defines>CPPHTTPLIB_OPENSSL_SUPPORT;USING_OPENSSL</OpenSSL_Defines>
     <OpenSSL_Lib_Static>libssl_static.lib</OpenSSL_Lib_Static>
     <OpenSSL_Lib>openssl.lib</OpenSSL_Lib>
     <LibCrypto_Lib_Static>libcrypto_static.lib</LibCrypto_Lib_Static>
@@ -58,7 +54,7 @@
 
   <PropertyGroup Label="JSMNLibConfig" Condition="'$(UsingJSMNLib)'=='1'">
     <JSMNLIB_RootDirectory>$(ExternalDirectory)\jsmn</JSMNLIB_RootDirectory>
-    <JSMN_Defines></JSMN_Defines>
+    <JSMN_Defines>USING_JSONLIB;JSMN_STATIC</JSMN_Defines>
   </PropertyGroup>
 
   <PropertyGroup Label="HTTPLibConfig" Condition="'$(UsingHTTPLib)'=='1'">
@@ -101,7 +97,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(OpenSSL_Include_Directory);$(HTTPLIB_RootDirectory);$(JSMNLIB_RootDirectory);$(ProjectRoot)src;$(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>CPPHTTPLIB_OPENSSL_SUPPORT;JSMN_STATIC;CCC_STATIC_LINKING;_CRT_SECURE_NO_WARNINGS;CC_WINAPP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(JSMN_Defines);$(HTTPLib_Defines);$(OpenSSL_Defines);CCC_STATIC_LINKING;_CRT_SECURE_NO_WARNINGS;CC_WINAPP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
     <!-- 
@@ -112,8 +108,6 @@
       <AdditionalLibraryDirectories>$(OpenSSL_Library_Directory);$(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(OpenSSL_Lib_Static);$(LibCrypto_Lib_Static);$(WinsockLib);shlwapi.lib;netapi32.lib;user32.lib;comctl32.lib</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
-      <PreprocessorDefinitions>$(JSMN_Defines);$(HTTPLib_Defines);$(OpenSSL_Defines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
@@ -158,5 +152,6 @@
     <Message Text="================================================================================================" />
   </Target>
 </Project>
+
 
 

@@ -14,9 +14,12 @@
         [Parameter(Mandatory=$false)]
         [String]$BinaryName,
         [Parameter(Mandatory=$false)]
-        [switch]$Overwrite
+        [switch]$Overwrite,
+        [Parameter(Mandatory=$false)]
+        [switch]$UseHttpLib,
+        [Parameter(Mandatory=$false)]
+        [switch]$UseJsonLib
     )  
-
 
 
 try{
@@ -29,19 +32,10 @@ try{
     $Script:Importer         = (Resolve-Path "$PSScriptRoot\cmdlets\Import-Dependencies.ps1").Path
 
     
-
-    Write-Host "=======================================================" -f DarkYellow
-    Write-Host "`"$Script:Importer`" -Path `"$Script:DependenciesPath`"" -f Red
     . "$Script:Importer" -Path "$Script:DependenciesPath"
 
-
-    Write-Log "Script:TemplatePath $Script:TemplatePath"
-    
     $Guid = (New-Guid).Guid
     $Guid = "{$Guid}"
-
-Write-Log "DestinationPath $DestinationPath"
-    # Apply default values if required
 
     if($False -eq $PSBoundParameters.ContainsKey('BinaryName')){
         $BinaryName = $ProjectName
@@ -73,7 +67,19 @@ Write-Log "DestinationPath $DestinationPath"
     $s = Get-Date -uFormat %d
     $LogFile = "$ENV:Temp\log.$s.log"
     
-    Invoke-Robocopy -Source "$Script:TemplatePath" -Destination "$DestinationPath" -SyncType 'MIRROR' -ExcludeDir @('.git', '.vs') -ExcludeFiles @('__PROJECT_NAME__.vcxproj', '__PROJECT_NAME__.vcxproj.filters') -Log "$LogFile" 
+
+    $ExcludeDir = @('.git', '.vs')
+
+    if($UseJsonLib.IsPresent -eq $False){
+        $ExcludeDir += "jsmn"
+    }
+    if($UseHttpLib.IsPresent -eq $False){
+        $ExcludeDir += "cpp-httplib"
+        $ExcludeDir += "openssl"
+    }
+   
+
+    Invoke-Robocopy -Source "$Script:TemplatePath" -Destination "$DestinationPath" -SyncType 'MIRROR' -ExcludeDir $ExcludeDir -ExcludeFiles @('__PROJECT_NAME__.vcxproj', '__PROJECT_NAME__.vcxproj.filters') -Log "$LogFile" 
 
     $Script:BuildCfgFile = Join-Path $Script:TemplatePath "buildcfg.ini"
     $Script:ProjectFile = Join-Path $Script:TemplatePath "vs\__PROJECT_NAME__.vcxproj"
@@ -125,51 +131,44 @@ Write-Log "DestinationPath $DestinationPath"
             $FileContent = $FileContent -Replace '__BINARY_NAME__', $BinaryName
         }
 
-        Write-Host "Generating '$newfile'" -f DarkYellow
+        $UseHttpLibValue = "0"
+        if($UseHttpLib){
+            $UseHttpLibValue = "1"
+        }
+        $UseJsonLibValue = "0"
+        if($UseJsonLib){
+            $UseJsonLibValue = "1"
+        }
+        $i = $FileContent.IndexOf('__USE_HTTPLIB__')
+        if($i -ge 0){
+            Write-Verbose "Replacing '__USE_HTTPLIB__' to '"
+            $FileContent = $FileContent -Replace '__USE_HTTPLIB__', $UseHttpLibValue
+        }
+        $i = $FileContent.IndexOf('__USE_JSONLIB__')
+        if($i -ge 0){
+            Write-Verbose "Replacing '__USE_JSONLIB__' to '"
+            $FileContent = $FileContent -Replace '__USE_JSONLIB__', $UseJsonLibValue
+        }
+        Write-Output "Generating '$newfile'"
         Set-Content -Path $newfile -Value $FileContent
     }
 
-
-
-    <#
-For($x = 0 ; $x -lt $NewProjectFiles.Count ; $x++){
-        $newfile = $NewProjectFiles[$x]
-        if(Test-Path -Path $newfile -PathType Leaf){
-            if($Overwrite){
-                Remove-Item "$NewProjectFiles[$y]" -Force -ErrorAction Ignore | Out-Null ; Write-Output "DELETED `"$NewProjectFiles[$y]`"" -d;
-                continue;
-            }
-            Write-Output "Overwrite `"$newfile`" (y/n/a) " -n
-            $a = Read-Host '?'
-            while(($a -ne 'y') -And ($a -ne 'n') -And ($a -ne 'a')){
-                Write-Output "Please enter `"y`" , `"n`" or `"a`""
-                Write-Output "Overwrite `"$newfile`" (y/n/a) " -n
-                $a = Read-Host '?'
-            }
-            if($a -eq 'a'){  
-                For($y = 0 ; $y -lt $NewProjectFiles.Count ; $y++){
-                    Remove-Item "$NewProjectFiles[$y]" -Force -ErrorAction Ignore | Out-Null ; Write-Output "DELETED `"$NewProjectFiles[$y]`"" -d;
-                }
-                break;
-            }
-            elseif($a -ne 'y'){ throw "File $newfile already exists!" ; }else{ Remove-Item $newfile -Force -ErrorAction Ignore | Out-Null ; Write-Output "DELETED `"$newfile`"" -d;}
-        }
-    }
-
-    #>
+    
     
 }catch{
     $ErrorOccured = $True
     Show-ExceptionDetails $_ -ShowStack
 }finally{
     if($ErrorOccured -eq $False){
-        Write-Host "`n[SUCCESS] " -ForegroundColor DarkGreen -n
-        
+        Write-Host "===================================" -ForegroundColor Gray
+        Write-Host "New-ProjectFromTemplate [SUCCESS]" -ForegroundColor DarkGreen
+        Write-Host "===================================`n`n" -ForegroundColor Gray
         $exp = (Get-Command 'explorer.exe').Source
         &"$exp" "$DestinationPath"
 
         pushd "$DestinationPath"
         . "./Build.bat"
+        popd
         
     }else{
         Write-Host "`n[FAILED] " -ForegroundColor DarkRed -n

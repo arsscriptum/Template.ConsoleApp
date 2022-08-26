@@ -1,12 +1,58 @@
-Function ShouldCreateFolder($Folder){
-    $yeah = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes","Description."
-    $nah = New-Object System.Management.Automation.Host.ChoiceDescription "&No exit","Description."
-    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yeah, $nah)
-    $mess = "Create Destination Folder ($Folder) ?"
-    $rslt = $host.ui.PromptForChoice('', $mess, $options, 1)
-    
-    return ($rslt -eq 0)
+
+function New-RandomFilename{
+<#
+    .SYNOPSIS
+            Create a RandomFilename 
+    .DESCRIPTION
+            Create a RandomFilename 
+#>
+
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter(Mandatory=$false)]
+        [string]$Path = "$ENV:Temp",
+        [Parameter(Mandatory=$false)]
+        [string]$Extension = 'tmp',
+        [Parameter(Mandatory=$false)]
+        [int]$MaxLen = 6,
+        [Parameter(Mandatory=$false)]
+        [switch]$CreateFile,
+        [Parameter(Mandatory=$false)]
+        [switch]$CreateDirectory
+    )    
+    try{
+        if($MaxLen -lt 4){throw "MaxLen must be between 4 and 36"}
+        if($MaxLen -gt 36){throw "MaxLen must be between 4 and 36"}
+        [string]$filepath = $Null
+        [string]$rname = (New-Guid).Guid
+        Write-Verbose "Generated Guid $rname"
+        [int]$rval = Get-Random -Minimum 0 -Maximum 9
+        Write-Verbose "Generated rval $rval"
+        [string]$rname = $rname.replace('-',"$rval")
+        Write-Verbose "replace rval $rname"
+        [string]$rname = $rname.SubString(0,$MaxLen) + '.' + $Extension
+        Write-Verbose "Generated file name $rname"
+        if($CreateDirectory -eq $true){
+            [string]$rdirname = (New-Guid).Guid
+            $newdir = Join-Path "$Path" $rdirname
+            Write-Verbose "CreateDirectory option: creating dir: $newdir"
+            $Null = New-Item -Path $newdir -ItemType "Directory" -Force -ErrorAction Ignore
+            $filepath = Join-Path "$newdir" "$rname"
+        }
+        $filepath = Join-Path "$Path" $rname
+        Write-Verbose "Generated filename: $filepath"
+
+        if($CreateFile -eq $true){
+            Write-Verbose "CreateFile option: creating file: $filepath"
+            $Null = New-Item -Path $filepath -ItemType "File" -Force -ErrorAction Ignore 
+        }
+        return $filepath
+        
+    }catch{
+        Write-Error $_
+    }
 }
+
 
 function Invoke-Robocopy {
     <#
@@ -75,18 +121,15 @@ function Invoke-Robocopy {
         # throw errors on undefined variables
         Set-StrictMode -Version 1
 
+        $FNameOut = New-RandomFilename -Extension 'log' -CreateDirectory
+        $FNameErr = New-RandomFilename -Extension 'log' -CreateDirectory
 
         # make sure the given parameters are valid paths
 
-        if (-Not (Test-Path $Destination)) {
-            if((ShouldCreateFolder $Destination) -eq $True){
-                New-Item -Path $Destination -ItemType Directory -Force -ErrorAction Ignore | Out-null   
-                
-                Write-Host "creating $Destination " -f Gray
-            }else {
-               throw "Destination Path $Destination Non-Existent"
-            }   
+        if (Test-Path $Destination) {
+            throw "Destination Path $Destination Non-Existent"
         } 
+        New-Item -Path $Destination -ItemType Directory -Force -ErrorAction Ignore | Out-null   
         $Source  = Resolve-Path $Source
         $Destination = Resolve-Path $Destination
         $ROBOCOPY = (Get-Command 'robocopy.exe').Source
@@ -176,6 +219,8 @@ function Invoke-Robocopy {
             Wait = $true 
             NoNewWindow = $true
             PassThru = $true
+            RedirectStandardError  = $FNameErr
+            RedirectStandardOutput = $FNameOut
         }
         Write-Verbose "Start-Process $ProcessArguments"
 
@@ -192,9 +237,22 @@ function Invoke-Robocopy {
 
         [int]$elapsedSeconds = $stopwatch.Elapsed.Seconds
         $stopwatch.Stop()
-
-        Write-Host "[ROBOCOPY] " -f Blue -NoNewLine
-        Write-Host "COMPLETED IN $elapsedSeconds seconds"
+        $stdErr = ''
+        $stdOut = ''
+        if(Test-Path $FNameOut){
+            $stdOut = Get-Content -Path $FNameOut -Raw
+            
+            if ([string]::IsNullOrEmpty($stdOut) -eq $false) {
+                $stdOut = $stdOut.Trim()
+            }
+        }
+        if(Test-Path $FNameErr){
+            $stdErr = Get-Content -Path $FNameErr -Raw
+            if ([string]::IsNullOrEmpty($stdErr) -eq $false) {
+                $stdErr = $stdErr.Trim()
+            }
+        }
+        Write-Verbose "COMPLETED IN $elapsedSeconds seconds"
     
         $returnCodeMessage = @{
             0x00 = "[INFO]: No errors occurred, and no copying was done. The source and destination directory trees are completely synchronized."

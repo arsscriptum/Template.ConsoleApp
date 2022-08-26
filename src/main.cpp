@@ -104,6 +104,17 @@ int main(int argc, TCHAR** argv, TCHAR envp)
 	COUTC("===============================================");
 	COUTC("               TEST APPLICATION                ");
 	COUTC("===============================================");
+	#ifdef USING_HTTPLIB
+	COUTM("===============================================");
+	COUTM("                  USING_HTTPLIB                ");
+	COUTM("===============================================");
+	#endif
+	#ifdef USING_JSONLIB
+	COUTY("===============================================");
+	COUTY("                  USING_JSONLIB                ");
+	COUTY("===============================================");
+	#endif
+
 	return 0;
 	#ifdef USING_HTTPLIB
 	string destinationPath = ".";
@@ -352,8 +363,11 @@ char* getDlUrl(string filename, string api_url, bool optVerbose) {
 
 	const char* chr = body.c_str();
 	int len = body.size();
+	#ifdef USING_JSONLIB
 	char* download_url = parseJson(chr, len);
-
+	#else
+	char* download_url = nullptr;
+	#endif
 	if (optVerbose) {
 		COUTYRL("Download URL: ");
 		COUTRS("\"%s\"", download_url);
