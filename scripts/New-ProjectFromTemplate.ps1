@@ -41,6 +41,9 @@ try{
 
     $Script:ProjectFiles = @($Script:BuildCfgFile,$Script:ProjectFile, $Script:FiltersFile, $Script:ConfigsFile, $Script:DejaInsFile)
     $Script:NewProjectFiles = @($Script:NewBuildCfgFile,$Script:NewProjectFile, $Script:NewFiltersFile, $Script:NewConfigsFile, $Script:NewDejaInsFile )
+
+    Write-Host "=======================================================" -f DarkYellow
+    Write-Host "`"$Script:Importer`" -Path `"$Script:DependenciesPath`"" -f Red
     . "$Script:Importer" -Path "$Script:DependenciesPath"
 
 
@@ -54,7 +57,7 @@ Write-Log "DestinationPath $DestinationPath"
 
     if($False -eq $PSBoundParameters.ContainsKey('BinaryName')){
         $BinaryName = $ProjectName
-        LogMessage "BinaryName: Using default value `"$ProjectName`""
+        Write-Output "BinaryName: Using default value `"$ProjectName`""
     }
 
     $Script:Verbose = $False
@@ -67,7 +70,7 @@ Write-Log "DestinationPath $DestinationPath"
     $ErrorOccured = $False
     $TestMode = $False
     if($PSBoundParameters.ContainsKey('WhatIf')){
-        LogMessage "TESTMODE ENABLED"
+        Write-Output "TESTMODE ENABLED"
         $TestMode = $true
     }
 
@@ -77,48 +80,46 @@ Write-Log "DestinationPath $DestinationPath"
         }
     }else{
         $Null = New-Item -Path $DestinationPath -ItemType Directory -Force -ErrorAction Ignore
-        $Null = Remove-Item -Path $DestinationPath -ItemType Directory -Recurse -ErrorAction Ignore
+        $Null = Remove-Item -Path $DestinationPath -Force -Recurse -ErrorAction Ignore
     }
     $s = Get-Date -uFormat %d
     $LogFile = "$ENV:Temp\log.$s.log"
-    Invoke-Robocopy -Source $Script:TemplatePath -Destination "$DestinationPath" -SyncType 'MIRROR' -ExcludedPath @('.git', '.vs') -Log $LogFile
-
+    
+    Invoke-Robocopy -Source "$Script:TemplatePath" -Destination "$DestinationPath" -SyncType 'MIRROR' -Exclude @('.git', '.vs') -Log "$LogFile" 
 
     $Logs = Get-Content $LogFile
     ForEach($l in $Logs){
         Write-Host "$l" -DarkCyan
     }
-    
 
-    return
 
     For($x = 0 ; $x -lt $NewProjectFiles.Count ; $x++){
         $newfile = $NewProjectFiles[$x]
         if(Test-Path -Path $newfile -PathType Leaf){
             if($Overwrite){
-                Remove-Item "$NewProjectFiles[$y]" -Force -ErrorAction Ignore | Out-Null ; LogMessage "DELETED `"$NewProjectFiles[$y]`"" -d;
+                Remove-Item "$NewProjectFiles[$y]" -Force -ErrorAction Ignore | Out-Null ; Write-Output "DELETED `"$NewProjectFiles[$y]`"" -d;
                 continue;
             }
-            LogMessage "Overwrite `"$newfile`" (y/n/a) " -n
+            Write-Output "Overwrite `"$newfile`" (y/n/a) " -n
             $a = Read-Host '?'
             while(($a -ne 'y') -And ($a -ne 'n') -And ($a -ne 'a')){
-                LogMessage "Please enter `"y`" , `"n`" or `"a`""
-                LogMessage "Overwrite `"$newfile`" (y/n/a) " -n
+                Write-Output "Please enter `"y`" , `"n`" or `"a`""
+                Write-Output "Overwrite `"$newfile`" (y/n/a) " -n
                 $a = Read-Host '?'
             }
             if($a -eq 'a'){  
                 For($y = 0 ; $y -lt $NewProjectFiles.Count ; $y++){
-                    Remove-Item "$NewProjectFiles[$y]" -Force -ErrorAction Ignore | Out-Null ; LogMessage "DELETED `"$NewProjectFiles[$y]`"" -d;
+                    Remove-Item "$NewProjectFiles[$y]" -Force -ErrorAction Ignore | Out-Null ; Write-Output "DELETED `"$NewProjectFiles[$y]`"" -d;
                 }
                 break;
             }
-            elseif($a -ne 'y'){ throw "File $newfile already exists!" ; }else{ Remove-Item $newfile -Force -ErrorAction Ignore | Out-Null ; LogMessage "DELETED `"$newfile`"" -d;}
+            elseif($a -ne 'y'){ throw "File $newfile already exists!" ; }else{ Remove-Item $newfile -Force -ErrorAction Ignore | Out-Null ; Write-Output "DELETED `"$newfile`"" -d;}
         }
     }
     For($x = 0 ; $x -lt $ProjectFiles.Count ; $x++){
         $file = $ProjectFiles[$x]
         $newfile = $NewProjectFiles[$x]
-        LogMessage "Processing '$file'" -d
+        Write-Output "Processing '$file'" -d
         $Null = Remove-Item -Path $newfile -Force -ErrorAction Ignore
         $Null = New-Item -Path $newfile -ItemType File -Force -ErrorAction Ignore
         $exist = Test-Path -Path $file -PathType Leaf
@@ -132,36 +133,36 @@ Write-Log "DestinationPath $DestinationPath"
         }
         
 
-        LogMessage "Get-Content -Path $file -Raw" -d
+        Write-Output "Get-Content -Path $file -Raw" -d
         $FileContent = Get-Content -Path $file -Raw
         if($FileContent -eq $null){ throw "INVALID File $file" }
 
-        LogMessage "`$FileContent.IndexOf('__PROJECT_NAME__')" -d
+        Write-Output "`$FileContent.IndexOf('__PROJECT_NAME__')" -d
         $i = $FileContent.IndexOf('__PROJECT_NAME__')
         if($i -ge 0){
-            LogMessage "Replacing '__PROJECT_NAME__' to '$ProjectName'" -d
+            Write-Output "Replacing '__PROJECT_NAME__' to '$ProjectName'" -d
             $FileContent = $FileContent -Replace '__PROJECT_NAME__', $ProjectName    
         }
         $i = $FileContent.IndexOf('__PROJECT_GUID__')
         if($i -ge 0){
-            LogMessage "Replacing '__PROJECT_GUID__' to '$Guid'" -d
+            Write-Output "Replacing '__PROJECT_GUID__' to '$Guid'" -d
             $FileContent = $FileContent -Replace '__PROJECT_GUID__', $Guid
         }
         $i = $FileContent.IndexOf('__PROJECT_GUID__')
         if($i -ge 0){
-            LogMessage "Replacing '__BINARY_NAME__' to '$BinaryName'" -d
+            Write-Output "Replacing '__BINARY_NAME__' to '$BinaryName'" -d
             $FileContent = $FileContent -Replace '__BINARY_NAME__', $BinaryName
         }
 
 
         
-        LogMessage "Saving '$newfile'"
+        Write-Output "Saving '$newfile'"
         Set-Content -Path $newfile -Value $FileContent
     }
     
 }catch{
     $ErrorOccured = $True
-    ShowExceptionDetails $_ -ShowStack
+    Show-ExceptionDetails $_ -ShowStack
 }finally{
     if($ErrorOccured -eq $False){
         Write-Host "`n[SUCCESS] " -ForegroundColor DarkGreen -n
