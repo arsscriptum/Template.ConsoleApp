@@ -81,7 +81,7 @@ function Invoke-Robocopy {
         if (-Not (Test-Path $Destination)) {
             if((ShouldCreateFolder $Destination) -eq $True){
                 New-Item -Path $Destination -ItemType Directory -Force -ErrorAction Ignore | Out-null   
-                Write-Host '[ROBOCOPY] ' -f Blue -NoNewLine
+                
                 Write-Host "creating $Destination " -f Gray
             }else {
                throw "Destination Path $Destination Non-Existent"
@@ -99,41 +99,41 @@ function Invoke-Robocopy {
         if (-Not (Test-Path -Type Container $Destination)) { throw "not a container: $Destination" }
         if (-Not (Test-Path -Type Leaf $ROBOCOPY)) { throw "cannot find ROBOCOPY: $ROBOCOPY" }
 
-        Write-Host '[ROBOCOPY] ' -f Blue -NoNewLine
-        Write-Host "start sync $Source ==> $Destination`n`tMULTI-THERADED (8 threads)`n`t1 FAILURE ALLOWED`n`tCREATE DIRECTORY STRUCTURE`n" -f Gray
+        
+        Write-Verbose "start sync $Source ==> $Destination`n`tMULTI-THERADED (8 threads)`n`t1 FAILURE ALLOWED`n`tCREATE DIRECTORY STRUCTURE`n"
         $ArgumentList = "$Source $Destination /MT:8 /R:1 /W:1 /BYTES /FP /X"
 
         if ($PSBoundParameters.ContainsKey('Verbose')) {
-            Write-Host '[ROBOCOPY] ' -f DarkRed -NoNewLine
-            Write-Host "Verbose OUTPUT" -f Yellow            
+            
+            Write-Verbose "Verbose OUTPUT"       
             $ArgumentList += " /V"
         }
 
         if ($PSBoundParameters.ContainsKey('WhatIf')) {
-            Write-Host '[ROBOCOPY] ' -f DarkRed -NoNewLine
-            Write-Host "WhatIf : Simulation; List only - don't copy, timestamp or delete any files." -f Yellow            
+           
+            Write-Verbose "WhatIf : Simulation; List only - don't copy, timestamp or delete any files." -f Yellow            
             $ArgumentList += " /L"
         }
         if ($PSBoundParameters.ContainsKey('ExcludeDir')) {
-            Write-Host '[ROBOCOPY] ' -f DarkRed -NoNewLine
-            Write-Host "=== Exclude ===" -f Red  
-            Write-Host " /XD " -f Yellow  
+           
+           
+            Write-Verbose " /XD " 
             $ArgumentList += " /XD "
             ForEach($d in $ExcludeDir){
                 $ArgumentList += "`"$d`" "
-                Write-Host "`"$d`" " -f Yellow  
+                Write-Verbose "`"$d`" "
             }          
             
         }
 
         if ($PSBoundParameters.ContainsKey('ExcludeFiles')) {
-            Write-Host '[ROBOCOPY] ' -f DarkRed -NoNewLine
-            Write-Host "=== ExcludeFiles ===" -f Red  
-            Write-Host " /XF " -f Yellow  
+           
+      
+            Write-Verbose " /XF "
             $ArgumentList += " /XF "
             ForEach($d in $ExcludeFiles){
                 $ArgumentList += "`"$d`" "
-                Write-Host "`"$d`" " -f Yellow  
+                Write-Verbose "`"$d`" "
             }          
             
         }
@@ -142,17 +142,17 @@ function Invoke-Robocopy {
         if ($PSBoundParameters.ContainsKey('SyncType')) {
             if($SyncType -eq 'MIRROR'){
                 $ArgumentList += " /MIR"
-                Write-Host '[ROBOCOPY] ' -f Blue -NoNewLine
-                Write-Host "`n`tMIRRORING : FILES WILL BE REMOVED OR ADDED TO BE N SYNC" -f Yellow
+                
+                Write-Verbose "`n`tMIRRORING : FILES WILL BE REMOVED OR ADDED TO BE N SYNC"
             }elseif($SyncType -eq 'COPY'){
 
                 $ArgumentList += " /COPY:DAT /E"
-                Write-Host '[ROBOCOPY] ' -f Blue -NoNewLine
-                Write-Host "`n`tCOPY ALL file info. copy subdirectories, including Empty ones." -f Yellow
+                
+                Write-Verbose "`n`tCOPY ALL file info. copy subdirectories, including Empty ones."
             }elseif($SyncType -eq 'NOCOPY'){
                 $ArgumentList += " /PURGE /NOCOPY "
-                Write-Host '[ROBOCOPY] ' -f Blue -NoNewLine
-                Write-Host "`n`tNOCOPY" -f Yellow
+                
+                Write-Verbose "`n`tNOCOPY"
             }else{
                 throw "INVALID COPY TYPE"
             }
@@ -194,12 +194,8 @@ function Invoke-Robocopy {
         $stopwatch.Stop()
 
         Write-Host "[ROBOCOPY] " -f Blue -NoNewLine
-        Write-Host "COMPLETED IN $elapsedSeconds seconds" -f Gray
-        if($Log -ne ""){
-            $LogStr = Get-Content $Log -Raw
-            Write-Host "[ROBOCOPY] " -f Blue -NoNewLine
-            Write-Host "$LogStr " -f Yellow
-        }
+        Write-Host "COMPLETED IN $elapsedSeconds seconds"
+    
         $returnCodeMessage = @{
             0x00 = "[INFO]: No errors occurred, and no copying was done. The source and destination directory trees are completely synchronized."
             0x01 = "[INFO]: One or more files were copied successfully (that is, new files have arrived)."

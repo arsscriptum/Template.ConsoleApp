@@ -101,9 +101,9 @@ int main(int argc, TCHAR** argv, TCHAR envp)
 		return 0;
 	}
 
-	COUTMM("===============================================");
-	COUTMM("               TEST APPLICATION                ");
-	COUTMM("===============================================");
+	COUTC("===============================================");
+	COUTC("               TEST APPLICATION                ");
+	COUTC("===============================================");
 	return 0;
 	#ifdef USING_HTTPLIB
 	string destinationPath = ".";
@@ -181,13 +181,13 @@ int main(int argc, TCHAR** argv, TCHAR envp)
 
 void banner() {
 	std::wcout << std::endl;
-	COUTC("getfh v2.1 - TOOL TO GET FOSSHUB FILES\n");
+	COUTC("__PROJECT_NAME__ v2.1 - TOOL TO GET FOSSHUB FILES\n");
 	COUTC("Built on %s\n", __TIMESTAMP__);
 	COUTC("Copyright (C) 2000-2021 Guillaume Plante\n");
 	std::wcout << std::endl;
 }
 void usage() {
-	COUTCS("Usage: getfh.exe [-h][-v][-n][-p] path \n");
+	COUTCS("Usage: __BINARY_NAME__ [-h][-v][-n][-p] path \n");
 	COUTCS("   -v          Verbose mode\n");
 	COUTCS("   -h          Help\n");
 	COUTCSNR("   -w          WhatIf: no actions, get url, test connection.");

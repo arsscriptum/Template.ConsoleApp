@@ -80,24 +80,17 @@ Write-Log "DestinationPath $DestinationPath"
     $Script:FiltersFile = Join-Path $Script:TemplatePath "vs\__PROJECT_NAME__.vcxproj.filters"
     $Script:ConfigsFile = Join-Path $Script:TemplatePath "vs\cfg\winapp.props"
     $Script:DejaInsFile = Join-Path $Script:TemplatePath "vs\cfg\dejainsight.props"
+    $Script:MainFile = Join-Path $TemplatePath "src\main.cpp"
 
-
-
-    
     $Script:NewBuildCfgFile = Join-Path $DestinationPath "buildcfg.ini"
     $Script:NewProjectFile = Join-Path $DestinationPath "vs\$($ProjectName).vcxproj"
     $Script:NewFiltersFile = Join-Path $DestinationPath "vs\$($ProjectName).vcxproj.filters"
     $Script:NewConfigsFile = Join-Path $DestinationPath "vs\cfg\winapp.props"
     $Script:NewDejaInsFile = Join-Path $DestinationPath "vs\cfg\dejainsight.props"
+    $Script:NewMainFile = Join-Path $DestinationPath "src\main.cpp"
+    $Script:ProjectFiles =    @($Script:BuildCfgFile,   $Script:ProjectFile,    $Script:FiltersFile,    $Script:ConfigsFile,        $Script:DejaInsFile,    $Script:MainFile)
+    $Script:NewProjectFiles = @($Script:NewBuildCfgFile,$Script:NewProjectFile, $Script:NewFiltersFile, $Script:NewConfigsFile ,    $Script:NewDejaInsFile, $Script:NewMainFile)
 
-    $Script:ProjectFiles =    @($Script:BuildCfgFile,   $Script:ProjectFile,    $Script:FiltersFile,    $Script:ConfigsFile,        $Script:DejaInsFile)
-    $Script:NewProjectFiles = @($Script:NewBuildCfgFile,$Script:NewProjectFile, $Script:NewFiltersFile, $Script:NewConfigsFile ,    $Script:NewDejaInsFile )
-
-    $Logs = Get-Content $LogFile
-    ForEach($l in $Logs){
-        Write-Host "$l" -DarkCyan
-    }
-    
     For($x = 0 ; $x -lt $ProjectFiles.Count ; $x++){
         $file = $ProjectFiles[$x]
         $newfile = $NewProjectFiles[$x]
@@ -126,7 +119,7 @@ Write-Log "DestinationPath $DestinationPath"
             Write-Verbose "Replacing '__PROJECT_GUID__' to '$Guid'"
             $FileContent = $FileContent -Replace '__PROJECT_GUID__', $Guid
         }
-        $i = $FileContent.IndexOf('__PROJECT_GUID__')
+        $i = $FileContent.IndexOf('__BINARY_NAME__')
         if($i -ge 0){
             Write-Verbose "Replacing '__BINARY_NAME__' to '$BinaryName'"
             $FileContent = $FileContent -Replace '__BINARY_NAME__', $BinaryName
