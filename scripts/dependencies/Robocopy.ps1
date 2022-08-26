@@ -58,7 +58,9 @@ function Invoke-Robocopy {
         [Alias('d', 'dst')]
         [String]$Destination,
         [Parameter(Mandatory=$false)]
-        [String[]]$Exclude,
+        [String[]]$ExcludeDir,
+        [Parameter(Mandatory=$false)]
+        [String[]]$ExcludeFiles,
         [Parameter(Mandatory=$false)]
         [Alias('t', 'type')]
         [ValidateSet('MIRROR', 'COPY', 'NOCOPY')]
@@ -112,17 +114,30 @@ function Invoke-Robocopy {
             Write-Host "WhatIf : Simulation; List only - don't copy, timestamp or delete any files." -f Yellow            
             $ArgumentList += " /L"
         }
-        if ($PSBoundParameters.ContainsKey('Exclude')) {
+        if ($PSBoundParameters.ContainsKey('ExcludeDir')) {
             Write-Host '[ROBOCOPY] ' -f DarkRed -NoNewLine
             Write-Host "=== Exclude ===" -f Red  
             Write-Host " /XD " -f Yellow  
             $ArgumentList += " /XD "
-            ForEach($d in $Exclude){
+            ForEach($d in $ExcludeDir){
                 $ArgumentList += "`"$d`" "
                 Write-Host "`"$d`" " -f Yellow  
             }          
             
         }
+
+        if ($PSBoundParameters.ContainsKey('ExcludeFiles')) {
+            Write-Host '[ROBOCOPY] ' -f DarkRed -NoNewLine
+            Write-Host "=== ExcludeFiles ===" -f Red  
+            Write-Host " /XF " -f Yellow  
+            $ArgumentList += " /XF "
+            ForEach($d in $ExcludeFiles){
+                $ArgumentList += "`"$d`" "
+                Write-Host "`"$d`" " -f Yellow  
+            }          
+            
+        }
+
 
         if ($PSBoundParameters.ContainsKey('SyncType')) {
             if($SyncType -eq 'MIRROR'){

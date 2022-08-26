@@ -8,9 +8,9 @@
      <TempRoot>$(ProjectDir)</TempRoot>
      <UsingQt5>0</UsingQt5>
      <UsingWinsock>0</UsingWinsock>
-     <UsingOpenSSL>1</UsingOpenSSL>
-     <UsingJSMNLib>1</UsingJSMNLib>
-     <UsingHTTPLib>1</UsingHTTPLib>
+     <UsingOpenSSL>0</UsingOpenSSL>
+     <UsingJSMNLib>0</UsingJSMNLib>
+     <UsingHTTPLib>0</UsingHTTPLib>
      <SolutionRootDirectory>$(ProjectDir)..\</SolutionRootDirectory>
      <ExternalDirectory>$(SolutionRootDirectory)\external</ExternalDirectory>
   </PropertyGroup> 

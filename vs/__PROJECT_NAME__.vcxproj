@@ -32,9 +32,9 @@
     <QtExternalDir>$(QtRootPath)</QtExternalDir>
   </PropertyGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{4d59bbdb-ab21-4e55-b180-bab0a6730091}</ProjectGuid>
+    <ProjectGuid>__PROJECT_GUID__</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>IfFanGet</RootNamespace>
+    <RootNamespace>__PROJECT_NAME__</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -60,15 +60,15 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)'=='ReleasePList'">
-    <TargetName>IfFanGet</TargetName>
+    <TargetName>__BINARY_NAME__</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <TargetName>IfFanGet</TargetName>
+    <TargetName>__BINARY_NAME__</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <TargetName>IfFanGet</TargetName>
+    <TargetName>__BINARY_NAME__</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <!--<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleasePList|x64'">

@@ -14,8 +14,13 @@
 #include "cmdline.h"
 #include "Shlwapi.h"
 #include "log.h"
+#ifdef USING_HTTPLIB
 #include "httplib.h"
+#endif
+#ifdef USING_JSONLIB
 #include "jsmn.h"
+#endif
+
 #include <codecvt>
 #include <locale>
 #include <vector>
@@ -28,9 +33,10 @@
 
 #ifdef USING_HTTPLIB
 #pragma message( "USING HTTPLIB" )
+using namespace httplib;
 #endif
 
-using namespace httplib;
+
 using namespace std;
 
 #pragma message( "Compiling " __FILE__ )
@@ -38,10 +44,13 @@ using namespace std;
 
 void banner();
 void usage();
-void logError(const char * msg);
+
+#ifdef USING_JSONLIB
 char* parseJson(const char* js, int len);
-vector<string> split(const string& s, char delim);
 static int jsoneq(const char* json, jsmntok_t* tok, const char* s);
+#endif
+#ifdef USING_HTTPLIB
+vector<string> split(const string& s, char delim);
 string dump_headers(const Headers& headers);
 string dump_params(const Params& params);
 bool downloadFile(string dwl_url, string fullUrl, string outFile, bool optVerbose);
@@ -49,10 +58,9 @@ char* getDlUrl(string filename, string api_url, bool optVerbose);
 string log(const Request& req, const Response& res);
 void writeFileBytes(const char* filename, const char* buffer, int size);
 bool testConnection(const char * host, int port, time_t conn_timeout_sec = 5, time_t read_timeout_sec = 5, time_t write_timeout_sec = 5);
-
-
+void logError(const char * msg);
 void testLogFunctions(const char * msg);
-
+#endif
 int main(int argc, TCHAR** argv, TCHAR envp)
 {
 
@@ -92,15 +100,17 @@ int main(int argc, TCHAR** argv, TCHAR envp)
 		usage();
 		return 0;
 	}
+
+	COUTMM("===============================================");
+	COUTMM("               TEST APPLICATION                ");
+	COUTMM("===============================================");
+	return 0;
+	#ifdef USING_HTTPLIB
 	string destinationPath = ".";
 	if (optPath) {
 		destinationPath = inputParser->getCmdOption("-p");
 	}
 
-
-	testLogFunctions(destinationPath.c_str());
-	return 0;
-  
 	auto my_url = "https://arsscriptum.github.io";
 	auto api_url = "https://api.fosshub.com";	
 	auto dwl_url = "https://download.fosshub.com";	
@@ -162,10 +172,34 @@ int main(int argc, TCHAR** argv, TCHAR envp)
 			return -2;
 		}
 	}
-
+#endif
 	return 0;
 }
 
+
+
+
+void banner() {
+	std::wcout << std::endl;
+	COUTC("getfh v2.1 - TOOL TO GET FOSSHUB FILES\n");
+	COUTC("Built on %s\n", __TIMESTAMP__);
+	COUTC("Copyright (C) 2000-2021 Guillaume Plante\n");
+	std::wcout << std::endl;
+}
+void usage() {
+	COUTCS("Usage: getfh.exe [-h][-v][-n][-p] path \n");
+	COUTCS("   -v          Verbose mode\n");
+	COUTCS("   -h          Help\n");
+	COUTCSNR("   -w          WhatIf: no actions, get url, test connection.");
+	COUTY("  No downloads");
+	COUTCS("   -n          No banner\n");
+	COUTCS("   -p path     Destination path\n");
+	std::wcout << std::endl;
+}
+
+
+
+#ifdef USING_JSONLIB
 char* parseJson(const char *js, int len){
 
 	int i;
@@ -196,6 +230,15 @@ char* parseJson(const char *js, int len){
 }
 
 
+static int jsoneq(const char* json, jsmntok_t* tok, const char* s) {
+	if (tok->type == JSMN_STRING && (int)strlen(s) == tok->end - tok->start &&
+		strncmp(json + tok->start, s, tok->end - tok->start) == 0) {
+		return 0;
+	}
+	return -1;
+}
+#endif
+#ifdef USING_HTTPLIB
 
 vector<string> split(const string& s, char delim) {
 	vector<string> result;
@@ -207,15 +250,6 @@ vector<string> split(const string& s, char delim) {
 	}
 
 	return result;
-}
-
-
-static int jsoneq(const char* json, jsmntok_t* tok, const char* s) {
-	if (tok->type == JSMN_STRING && (int)strlen(s) == tok->end - tok->start &&
-		strncmp(json + tok->start, s, tok->end - tok->start) == 0) {
-		return 0;
-	}
-	return -1;
 }
 
 
@@ -243,24 +277,6 @@ string dump_params(const Params& params) {
 	return s;
 }
 
-
-void banner() {
-	std::wcout << std::endl;
-	COUTC("getfh v2.1 - TOOL TO GET FOSSHUB FILES\n");
-	COUTC("Built on %s\n", __TIMESTAMP__);
-	COUTC("Copyright (C) 2000-2021 Guillaume Plante\n");
-	std::wcout << std::endl;
-}
-void usage() {
-	COUTCS("Usage: getfh.exe [-h][-v][-n][-p] path \n");
-	COUTCS("   -v          Verbose mode\n");
-	COUTCS("   -h          Help\n");
-	COUTCSNR("   -w          WhatIf: no actions, get url, test connection.");
-	COUTY("  No downloads");
-	COUTCS("   -n          No banner\n");
-	COUTCS("   -p path     Destination path\n");
-	std::wcout << std::endl;
-}
 
 
 
@@ -443,3 +459,4 @@ bool testConnection(const char * host, int port, time_t conn_timeout_sec, time_t
 
   return true;
 }
+#endif

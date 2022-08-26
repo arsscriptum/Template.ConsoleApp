@@ -27,15 +27,7 @@ try{
     $Script:TemplatePath = $Script:ProjectRoot
     $Script:DependenciesPath = (Resolve-Path "$PSScriptRoot\dependencies").Path
     $Script:Importer         = (Resolve-Path "$PSScriptRoot\cmdlets\Import-Dependencies.ps1").Path
-    $Script:BuildCfgFile = Join-Path $Script:TemplatePath "buildcfg.ini"
-    $Script:ProjectFile = Join-Path $Script:TemplatePath "vs\__PROJECT_NAME__.vcxproj"
-    $Script:FiltersFile = Join-Path $Script:TemplatePath "vs\__PROJECT_NAME__.vcxproj.filters"
-    $Script:ConfigsFile = Join-Path $Script:TemplatePath "vs\cfg\winapp.props"
-    $Script:DejaInsFile = Join-Path $Script:TemplatePath "vs\cfg\dejainsight.props"
 
-
-
-    $Script:ProjectFiles = @($Script:BuildCfgFile,$Script:ProjectFile, $Script:FiltersFile, $Script:ConfigsFile, $Script:DejaInsFile)
     
 
     Write-Host "=======================================================" -f DarkYellow
@@ -81,21 +73,73 @@ Write-Log "DestinationPath $DestinationPath"
     $s = Get-Date -uFormat %d
     $LogFile = "$ENV:Temp\log.$s.log"
     
-    Invoke-Robocopy -Source "$Script:TemplatePath" -Destination "$DestinationPath" -SyncType 'MIRROR' -Exclude @('.git', '.vs') -Log "$LogFile" 
-    $Script:NewBuildCfgFile = Join-Path $Path "$DestinationPath\buildcfg.ini"
-    $Script:NewProjectFile = Join-Path $Path "$DestinationPath\vs\$($ProjectName).vcxproj"
-    $Script:NewFiltersFile = Join-Path $Path "$DestinationPath\vs\$($ProjectName).vcxproj.filters"
-    $Script:NewConfigsFile = Join-Path $Path "$DestinationPath\vs\cfg\winapp.props"
-    $Script:NewDejaInsFile = Join-Path $Path "$DestinationPath\vs\cfg\dejainsight.props"
-    $Script:NewProjectFiles = @($Script:NewBuildCfgFile,$Script:NewProjectFile, $Script:NewFiltersFile, $Script:NewConfigsFile, $Script:NewDejaInsFile )
+    Invoke-Robocopy -Source "$Script:TemplatePath" -Destination "$DestinationPath" -SyncType 'MIRROR' -ExcludeDir @('.git', '.vs') -ExcludeFiles @('__PROJECT_NAME__.vcxproj', '__PROJECT_NAME__.vcxproj.filters') -Log "$LogFile" 
+
+    $Script:BuildCfgFile = Join-Path $Script:TemplatePath "buildcfg.ini"
+    $Script:ProjectFile = Join-Path $Script:TemplatePath "vs\__PROJECT_NAME__.vcxproj"
+    $Script:FiltersFile = Join-Path $Script:TemplatePath "vs\__PROJECT_NAME__.vcxproj.filters"
+    $Script:ConfigsFile = Join-Path $Script:TemplatePath "vs\cfg\winapp.props"
+    $Script:DejaInsFile = Join-Path $Script:TemplatePath "vs\cfg\dejainsight.props"
+
+
+
+    
+    $Script:NewBuildCfgFile = Join-Path $DestinationPath "buildcfg.ini"
+    $Script:NewProjectFile = Join-Path $DestinationPath "vs\$($ProjectName).vcxproj"
+    $Script:NewFiltersFile = Join-Path $DestinationPath "vs\$($ProjectName).vcxproj.filters"
+    $Script:NewConfigsFile = Join-Path $DestinationPath "vs\cfg\winapp.props"
+    $Script:NewDejaInsFile = Join-Path $DestinationPath "vs\cfg\dejainsight.props"
+
+    $Script:ProjectFiles =    @($Script:BuildCfgFile,   $Script:ProjectFile,    $Script:FiltersFile,    $Script:ConfigsFile,        $Script:DejaInsFile)
+    $Script:NewProjectFiles = @($Script:NewBuildCfgFile,$Script:NewProjectFile, $Script:NewFiltersFile, $Script:NewConfigsFile ,    $Script:NewDejaInsFile )
 
     $Logs = Get-Content $LogFile
     ForEach($l in $Logs){
         Write-Host "$l" -DarkCyan
     }
+    
+    For($x = 0 ; $x -lt $ProjectFiles.Count ; $x++){
+        $file = $ProjectFiles[$x]
+        $newfile = $NewProjectFiles[$x]
+        
+        $Null = Remove-Item -Path $newfile -Force -ErrorAction Ignore
+        $Null = New-Item -Path $newfile -ItemType File -Force -ErrorAction Ignore
+        $exist = Test-Path -Path $file -PathType Leaf
+      
+        if($exist -eq $False){    
+            throw "Missing $file"
+        }
+        
+
+        Write-Verbose "Get-Content -Path `"$file`" -Raw"
+        $FileContent = Get-Content -Path "$file" -Raw
+        if($FileContent -eq $null){ throw "INVALID File $file" }
+
+        Write-Verbose "`$FileContent.IndexOf('__PROJECT_NAME__')"
+        $i = $FileContent.IndexOf('__PROJECT_NAME__')
+        if($i -ge 0){
+            Write-Verbose "Replacing '__PROJECT_NAME__' to '$ProjectName'"
+            $FileContent = $FileContent -Replace '__PROJECT_NAME__', $ProjectName    
+        }
+        $i = $FileContent.IndexOf('__PROJECT_GUID__')
+        if($i -ge 0){
+            Write-Verbose "Replacing '__PROJECT_GUID__' to '$Guid'"
+            $FileContent = $FileContent -Replace '__PROJECT_GUID__', $Guid
+        }
+        $i = $FileContent.IndexOf('__PROJECT_GUID__')
+        if($i -ge 0){
+            Write-Verbose "Replacing '__BINARY_NAME__' to '$BinaryName'"
+            $FileContent = $FileContent -Replace '__BINARY_NAME__', $BinaryName
+        }
+
+        Write-Host "Generating '$newfile'" -f DarkYellow
+        Set-Content -Path $newfile -Value $FileContent
+    }
 
 
-    For($x = 0 ; $x -lt $NewProjectFiles.Count ; $x++){
+
+    <#
+For($x = 0 ; $x -lt $NewProjectFiles.Count ; $x++){
         $newfile = $NewProjectFiles[$x]
         if(Test-Path -Path $newfile -PathType Leaf){
             if($Overwrite){
@@ -118,49 +162,8 @@ Write-Log "DestinationPath $DestinationPath"
             elseif($a -ne 'y'){ throw "File $newfile already exists!" ; }else{ Remove-Item $newfile -Force -ErrorAction Ignore | Out-Null ; Write-Output "DELETED `"$newfile`"" -d;}
         }
     }
-    For($x = 0 ; $x -lt $ProjectFiles.Count ; $x++){
-        $file = $ProjectFiles[$x]
-        $newfile = $NewProjectFiles[$x]
-        Write-Output "Processing '$file'" -d
-        $Null = Remove-Item -Path $newfile -Force -ErrorAction Ignore
-        $Null = New-Item -Path $newfile -ItemType File -Force -ErrorAction Ignore
-        $exist = Test-Path -Path $file -PathType Leaf
-        if($Verbose){
-            LogResult "CHECKING FILE `"$file`"" -Ok:$exist
-        }
 
-        
-        if($exist -eq $False){    
-            throw "Missing $file"
-        }
-        
-
-        Write-Output "Get-Content -Path $file -Raw" -d
-        $FileContent = Get-Content -Path $file -Raw
-        if($FileContent -eq $null){ throw "INVALID File $file" }
-
-        Write-Output "`$FileContent.IndexOf('__PROJECT_NAME__')" -d
-        $i = $FileContent.IndexOf('__PROJECT_NAME__')
-        if($i -ge 0){
-            Write-Output "Replacing '__PROJECT_NAME__' to '$ProjectName'" -d
-            $FileContent = $FileContent -Replace '__PROJECT_NAME__', $ProjectName    
-        }
-        $i = $FileContent.IndexOf('__PROJECT_GUID__')
-        if($i -ge 0){
-            Write-Output "Replacing '__PROJECT_GUID__' to '$Guid'" -d
-            $FileContent = $FileContent -Replace '__PROJECT_GUID__', $Guid
-        }
-        $i = $FileContent.IndexOf('__PROJECT_GUID__')
-        if($i -ge 0){
-            Write-Output "Replacing '__BINARY_NAME__' to '$BinaryName'" -d
-            $FileContent = $FileContent -Replace '__BINARY_NAME__', $BinaryName
-        }
-
-
-        
-        Write-Output "Saving '$newfile'"
-        Set-Content -Path $newfile -Value $FileContent
-    }
+    #>
     
 }catch{
     $ErrorOccured = $True
@@ -168,13 +171,13 @@ Write-Log "DestinationPath $DestinationPath"
 }finally{
     if($ErrorOccured -eq $False){
         Write-Host "`n[SUCCESS] " -ForegroundColor DarkGreen -n
-        if($TestMode){
-            Write-Host "test success! You can rerun in normal mode" -ForegroundColor Gray
-        }else{
-            Write-Host "Project generated in $Path" -ForegroundColor Gray    
-            $exp = (Get-Command 'explorer.exe').Source
-            &"$exp" "$Path"
-        }
+        
+        $exp = (Get-Command 'explorer.exe').Source
+        &"$exp" "$DestinationPath"
+
+        pushd "$DestinationPath"
+        . "./Build.bat"
+        
     }else{
         Write-Host "`n[FAILED] " -ForegroundColor DarkRed -n
         Write-Host "Script failure" -ForegroundColor Gray
