@@ -33,14 +33,10 @@ try{
     $Script:ConfigsFile = Join-Path $Script:TemplatePath "vs\cfg\winapp.props"
     $Script:DejaInsFile = Join-Path $Script:TemplatePath "vs\cfg\dejainsight.props"
 
-    $Script:NewBuildCfgFile = Join-Path $Path "buildcfg.ini"
-    $Script:NewProjectFile = Join-Path $Path "vs\$($ProjectName).vcxproj"
-    $Script:NewFiltersFile = Join-Path $Path "vs\$($ProjectName).vcxproj.filters"
-    $Script:NewConfigsFile = Join-Path $Path "vs\cfg\winapp.props"
-    $Script:NewDejaInsFile = Join-Path $Path "vs\cfg\dejainsight.props"
+
 
     $Script:ProjectFiles = @($Script:BuildCfgFile,$Script:ProjectFile, $Script:FiltersFile, $Script:ConfigsFile, $Script:DejaInsFile)
-    $Script:NewProjectFiles = @($Script:NewBuildCfgFile,$Script:NewProjectFile, $Script:NewFiltersFile, $Script:NewConfigsFile, $Script:NewDejaInsFile )
+    
 
     Write-Host "=======================================================" -f DarkYellow
     Write-Host "`"$Script:Importer`" -Path `"$Script:DependenciesPath`"" -f Red
@@ -86,6 +82,12 @@ Write-Log "DestinationPath $DestinationPath"
     $LogFile = "$ENV:Temp\log.$s.log"
     
     Invoke-Robocopy -Source "$Script:TemplatePath" -Destination "$DestinationPath" -SyncType 'MIRROR' -Exclude @('.git', '.vs') -Log "$LogFile" 
+    $Script:NewBuildCfgFile = Join-Path $Path "$DestinationPath\buildcfg.ini"
+    $Script:NewProjectFile = Join-Path $Path "$DestinationPath\vs\$($ProjectName).vcxproj"
+    $Script:NewFiltersFile = Join-Path $Path "$DestinationPath\vs\$($ProjectName).vcxproj.filters"
+    $Script:NewConfigsFile = Join-Path $Path "$DestinationPath\vs\cfg\winapp.props"
+    $Script:NewDejaInsFile = Join-Path $Path "$DestinationPath\vs\cfg\dejainsight.props"
+    $Script:NewProjectFiles = @($Script:NewBuildCfgFile,$Script:NewProjectFile, $Script:NewFiltersFile, $Script:NewConfigsFile, $Script:NewDejaInsFile )
 
     $Logs = Get-Content $LogFile
     ForEach($l in $Logs){
