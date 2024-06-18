@@ -6,13 +6,17 @@
 .vs/
 .vs/**
 
+# binaries 
 bin/
 bin/**
+
+# tmp and build files
 tmp/
 tmp/**
-
 obj/
 obj/**
+vs/obj
+vs/obj/**
 
 ipch/
 ipch/**

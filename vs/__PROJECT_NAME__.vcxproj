@@ -5,14 +5,6 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="ReleasePList|Win32">
-      <Configuration>ReleasePList</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="ReleasePList|x64">
-      <Configuration>ReleasePList</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
@@ -59,10 +51,6 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)'=='ReleasePList'">
-    <TargetName>__BINARY_NAME__</TargetName>
-    <GenerateManifest>false</GenerateManifest>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <TargetName>__BINARY_NAME__</TargetName>
     <GenerateManifest>false</GenerateManifest>
@@ -71,41 +59,25 @@
     <TargetName>__BINARY_NAME__</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
-  <!--<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleasePList|x64'">
-    <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetFileName) $(ToolsRoot)</Command>
-    </PostBuildEvent> 
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetFileName) $(ToolsRoot)</Command>
-    </PostBuildEvent>
-  </ItemDefinitionGroup>-->
   <ItemGroup>
-    <ClCompile Include="$(ProjectRoot)src\main.cpp" />
-    <ClCompile Include="$(ProjectRoot)src\stdafx.cpp">
+    <ClCompile Include="$(SourcesDirectory)main.cpp" />
+    <ClCompile Include="$(SourcesDirectory)stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\src\cdll.cpp" />
-    <ClCompile Include="..\src\cmdline.cpp" />
-    <ClCompile Include="..\src\init.cpp" />
-    <ClCompile Include="..\src\log.cpp" />
-    <ClCompile Include="..\src\win32.cpp" />
+    <ClCompile Include="$(SourcesDirectory)cmdline.cpp" />
+    <ClCompile Include="$(SourcesDirectory)init.cpp" />
+    <ClCompile Include="$(SourcesDirectory)log.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="$(ProjectRoot)src\resources.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\cdll.h" />
-    <ClInclude Include="..\src\cmdline.h" />
-    <ClInclude Include="..\src\log.h" />
-    <ClInclude Include="..\src\macros.h" />
-    <ClInclude Include="..\src\nowarns.h" />
-    <ClInclude Include="..\src\stdafx.h" />
-    <ClInclude Include="..\src\targetver.h" />
-    <ClInclude Include="..\src\win32.h" />
-    <ClInclude Include="..\external\httplib\httplib.h" />
-    <ClInclude Include="..\external\jsmn\jsmn.h" />
+    <ClInclude Include="$(SourcesDirectory)cmdline.h" />
+    <ClInclude Include="$(SourcesDirectory)log.h" />
+    <ClInclude Include="$(SourcesDirectory)macros.h" />
+    <ClInclude Include="$(SourcesDirectory)nowarns.h" />
+    <ClInclude Include="$(SourcesDirectory)stdafx.h" />
+    <ClInclude Include="$(SourcesDirectory)targetver.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
@@ -113,7 +85,7 @@
   <Target Name="CustomClean" BeforeTargets="BeforeBuild">
     <Message Text="Custom Clean" Importance="high" />
     <ItemGroup>
-      <_CustomFilesToDelete Include="$(ProjectRoot)\bin\x64\Release\*" />
+      <_CustomFilesToDelete Include="$(OutDir)*" />
     </ItemGroup>
     <Delete Files="@(_CustomFilesToDelete)" />
   </Target>
